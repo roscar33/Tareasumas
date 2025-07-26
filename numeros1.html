@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Juego de Sumas - IE de María</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Comic Sans MS', normal, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; touch-action: manipulation; }
+        .container { max-width: 100%; margin: 0 auto; padding: 10px; }
+        .cover-screen, .student-selection, .game-screen, .final-screen { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; }
+        .cover-screen { background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); }
+        .student-selection, .final-screen { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: none; }
+        .game-screen { display: none; padding: 20px 10px; background: none; width: 100%; max-width: 450px; }
+        .school-logo { width: 120px; height: 120px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.2); font-size: 48px; }
+        .cover-title { font-size: 2.5em; color: #2c3e50; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+        .institution-name { font-size: 1.4em; color: #34495e; margin-bottom: 30px; line-height: 1.4; }
+        button { font-family: inherit; cursor: pointer; border: none; border-radius: 25px; padding: 15px 30px; font-size: 1.2em; min-height: 50px; transition: all 0.3s ease; -webkit-tap-highlight-color: transparent; }
+        button:hover, button:active { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+        .start-btn { background: linear-gradient(45deg, #4caf50, #45a049); color: white; border-radius: 50px; padding: 20px 40px; font-size: 1.3em; min-height: 60px; box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4); }
+        .continue-btn { background: linear-gradient(45deg, #3498db, #2980b9); color: white; }
+        .selection-card, .final-card, .exercise-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
+        .selection-title, .final-title { font-size: 2em; color: #2c3e50; margin-bottom: 30px; }
+        select.student-select { width: 100%; padding: 15px; font-size: 1.2em; border: 3px solid #3498db; border-radius: 10px; margin-bottom: 30px; font-family: inherit; background: #f8f9fa; min-height: 50px; }
+        .game-header { background: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .student-name { font-size: 1.3em; color: #2c3e50; margin-bottom: 5px; }
+        .progress { font-size: 1.1em; color: #7f8c8d; }
+        .exercise-number { font-size: 1.2em; color: #7f8c8d; margin-bottom: 20px; }
+        .sum-container { display: flex; justify-content: center; align-items: center; margin: 30px 0; }
+        .sum-display { display: flex; flex-direction: column; align-items: flex-end; font-size: 2.5em; font-weight: bold; color: #2c3e50; line-height: 1.2; font-family: 'Courier New', monospace; }
+        .number-row { display: flex; align-items: center; margin: 5px 0; justify-content: flex-end; min-width: 120px; }
+        .tens-digit, .units-digit { width: 40px; text-align: center; display: inline-block; }
+        .operator { margin-right: 10px; color: #e74c3c; width: 30px; text-align: center; }
+        .line { width: 120px; height: 3px; background: #34495e; margin: 10px 0; }
+        .input-container { display: flex; justify-content: center; gap: 10px; margin: 30px 0; }
+        .digit-input { width: 60px; height: 60px; font-size: 2em; text-align: center; border: 3px solid #3498db; border-radius: 10px; background: #f8f9fa; font-family: 'Courier New', monospace; font-weight: bold; }
+        .digit-input:focus { outline: none; border-color: #e74c3c; background: white; }
+        .input-label { font-size: 0.9em; color: #7f8c8d; margin-bottom: 5px; }
+        .input-group { display: flex; flex-direction: column; align-items: center; }
+        .check-btn { background: linear-gradient(45deg, #27ae60, #229954); color: white; margin: 20px 10px; }
+        .next-btn { background: linear-gradient(45deg, #f39c12, #e67e22); color: white; margin: 20px 10px; display: none; }
+        .feedback { font-size: 1.5em; font-weight: bold; margin: 20px 0; padding: 15px; border-radius: 10px; display: none; }
+        .correct { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
+        .incorrect { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
+        .final-title { font-size: 2.5em; color: #27ae60; margin-bottom: 20px; }
+        .final-score { font-size: 1.5em; color: #2c3e50; margin-bottom: 30px; }
+        .restart-btn { background: linear-gradient(45deg, #9b59b6, #8e44ad); color: white; }
+        @media (max-width: 768px) { .cover-title { font-size: 2em; } .institution-name { font-size: 1.2em; } .sum-display { font-size: 2em; } .digit-input { width: 50px; height: 50px; font-size: 1.5em; } .exercise-card, .selection-card, .final-card { padding: 30px 20px; } }
+        @media (max-width: 480px) { .cover-title { font-size: 1.8em; } .institution-name { font-size: 1.1em; } .school-logo { width: 100px; height: 100px; font-size: 40px; } .start-btn { padding: 15px 30px; font-size: 1.1em; } .sum-display { font-size: 1.8em; } .digit-input { width: 45px; height: 45px; font-size: 1.3em; } }
+    </style>
+</head>
+<body>
+    <div id="coverScreen" class="cover-screen">
+        <div class="school-logo">🎓</div>
+        <h1 class="cover-title">Juego de Sumas</h1>
+        <p class="institution-name">Institución Educativa de María<br />Sede Rural Santa Juana<br />Primer Grado</p>
+        <button class="start-btn" onclick="showStudentSelection()">¡Comenzar a Jugar! 🎮</button>
+    </div>
+
+    <div id="studentSelection" class="student-selection">
+        <div class="selection-card fade-in">
+            <h2 class="selection-title">Selecciona tu nombre</h2>
+            <select id="studentSelect" class="student-select" aria-label="Selecciona tu nombre">
+                <option value="">-- Elige tu nombre --</option>
+                <option value="Melanin Florez">Melanin Florez</option>
+                <option value="Sebastian Martinez">Sebastian Martinez</option>
+                <option value="Deibyn Yotagry">Deibyn Yotagry</option>
+                <option value="Leandro Gutierrez">Leandro Gutierrez</option>
+                <option value="María José Gonzalez">María José Gonzalez</option>
+                <option value="Luciana Varelas">Luciana Varelas</option>
+            </select>
+            <button class="continue-btn" onclick="startGame()">Continuar</button>
+        </div>
+    </div>
+
+    <div id="gameScreen" class="game-screen">
+        <div class="game-header">
+            <div class="student-name" id="studentName">Estudiante</div>
+            <div class="progress" id="progress">Ejercicio 1 de 20</div>
+        </div>
+        <div class="exercise-card fade-in">
+            <div class="exercise-number" id="exerciseNumber">Ejercicio 1</div>
+            <div class="sum-container" aria-label="Suma a resolver">
+                <div class="sum-display">
+                    <div class="number-row"><span class="tens-digit" id="firstTens">0</span><span class="units-digit" id="firstUnits">0</span></div>
+                    <div class="number-row"><span class="operator">+</span><span class="tens-digit" id="secondTens">0</span><span class="units-digit" id="secondUnits">0</span></div>
+                    <div class="line"></div>
+                    <div class="number-row" id="resultRow"><span class="tens-digit" id="resultTens">?</span><span class="units-digit" id="resultUnits">?</span></div>
+                </div>
+            </div>
+            <div class="input-container" role="group" aria-labelledby="inputLabelGroup">
+                <div class="input-group">
+                    <label for="tensInput" class="input-label">Decenas</label>
+                    <input type="number" class="digit-input" id="tensInput" min="0" max="9" placeholder="0" inputmode="numeric" pattern="[0-9]*" aria-label="Decenas"/>
+                </div>
+                <div class="input-group">
+                    <label for="unitsInput" class="input-label">Unidades</label>
+                    <input type="number" class="digit-input" id="unitsInput" min="0" max="9" placeholder="0" inputmode="numeric" pattern="[0-9]*" aria-label="Unidades"/>
+                </div>
+            </div>
+            <div class="feedback" id="feedback" role="alert" aria-live="assertive"></div>
+            <button class="check-btn" id="checkBtn" onclick="checkAnswer()">Verificar</button>
+            <button class="next-btn" id="nextBtn" onclick="nextExercise()">Siguiente</button>
+        </div>
+    </div>
+
+    <div id="finalScreen" class="final-screen">
+        <div class="final-card fade-in">
+            <h2 class="final-title">¡Felicitaciones! 🎉</h2>
+            <div class="final-score" id="finalScore">Has completado todos los ejercicios</div>
+            <button class="restart-btn" onclick="restartGame()">Jugar de Nuevo</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importa las funciones que necesitas del SDK de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- ¡IMPORTANTE! REEMPLAZA ESTO CON TU PROPIA CONFIGURACIÓN DE FIREBASE ---
+        const firebaseConfig = {
+  apiKey: "AIzaSyA2JB1mN9dIW4AQqO-wxFDGmK0GW9QCg5w",
+  authDomain: "ejerciciosumas.firebaseapp.com",
+  databaseURL: "https://ejerciciosumas-default-rtdb.firebaseio.com",
+  projectId: "ejerciciosumas",
+  storageBucket: "ejerciciosumas.firebasestorage.app",
+  messagingSenderId: "892790598447",
+  appId: "1:892790598447:web:b1b680d0e5d17c400b4fda"
+};
+        
+        let app, db;
+        try {
+            // Inicializa Firebase y Firestore
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            console.log("Firebase y Firestore inicializados correctamente. ¡Listo para guardar datos! ✅");
+        } catch (error) {
+            console.error("Error al inicializar Firebase: ", error);
+            console.log("El juego funcionará sin guardar los datos en la nube. 🛑");
+            db = null; // Aseguramos que 'db' sea nulo si hay un error
+        }
+
+        // Hacemos la base de datos y las funciones de Firestore accesibles globalmente
+        // para que el otro script pueda usarlas.
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.doc = doc;
+        window.setDoc = setDoc;
+    </script>
+    
+    <script>
+        let currentStudent = '';
+        let currentExercise = 1;
+        const totalExercises = 20;
+        let exercises = [];
+        let studentAnswers = []; // Almacenará las respuestas de la sesión actual
+        let correctAnswers = 0;
+        let gameStartTime = null;
+        let gameSessionId = '';
+
+        function formatNumber(num) {
+            return {
+                tens: Math.floor(num / 10).toString(),
+                units: (num % 10).toString(),
+            };
+        }
+
+        function generateExercises() {
+            exercises = [];
+            for (let i = 0; i < totalExercises; i++) {
+                let u1 = Math.floor(Math.random() * 10);
+                let u2 = Math.floor(Math.random() * (10 - u1));
+                let t1 = Math.floor(Math.random() * 5); // Aumentado para sumas un poco más complejas
+                let t2 = Math.floor(Math.random() * 5);
+                let num1 = t1 * 10 + u1;
+                let num2 = t2 * 10 + u2;
+                exercises.push({ number1: num1, number2: num2, result: num1 + num2 });
+            }
+        }
+
+        function showStudentSelection() {
+            document.getElementById('coverScreen').style.display = 'none';
+            document.getElementById('studentSelection').style.display = 'flex';
+        }
+
+        function startGame() {
+            currentStudent = document.getElementById('studentSelect').value;
+            if (!currentStudent) {
+                alert('Por favor, selecciona tu nombre para comenzar.');
+                return;
+            }
+
+            generateExercises();
+            currentExercise = 1;
+            correctAnswers = 0;
+            studentAnswers = [];
+            gameStartTime = new Date();
+            gameSessionId = gameStartTime.getTime().toString(); // ID único para esta sesión de juego
+
+            document.getElementById('studentSelection').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            document.getElementById('studentName').textContent = currentStudent;
+            loadExercise();
+        }
+
+        function loadExercise() {
+            const exercise = exercises[currentExercise - 1];
+            document.getElementById('exerciseNumber').textContent = `Ejercicio ${currentExercise}`;
+            document.getElementById('progress').textContent = `Ejercicio ${currentExercise} de ${totalExercises}`;
+
+            const n1 = formatNumber(exercise.number1);
+            const n2 = formatNumber(exercise.number2);
+            document.getElementById('firstTens').textContent = n1.tens;
+            document.getElementById('firstUnits').textContent = n1.units;
+            document.getElementById('secondTens').textContent = n2.tens;
+            document.getElementById('secondUnits').textContent = n2.units;
+            
+            ['resultTens', 'resultUnits'].forEach(id => document.getElementById(id).textContent = '?');
+            ['tensInput', 'unitsInput'].forEach(id => document.getElementById(id).value = '');
+            
+            document.getElementById('checkBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('feedback').style.display = 'none';
+            
+            setTimeout(() => document.getElementById('tensInput').focus(), 100);
+        }
+
+        function checkAnswer() {
+            const tensInput = document.getElementById('tensInput').value;
+            const unitsInput = document.getElementById('unitsInput').value;
+
+            if (tensInput === '' || unitsInput === '') {
+                alert('Por favor, ingresa tu respuesta en decenas y unidades.');
+                return;
+            }
+
+            const exercise = exercises[currentExercise - 1];
+            const studentAnswer = parseInt(tensInput, 10) * 10 + parseInt(unitsInput, 10);
+            const isCorrect = studentAnswer === exercise.result;
+            
+            const resultFormatted = formatNumber(exercise.result);
+            document.getElementById('resultTens').textContent = resultFormatted.tens;
+            document.getElementById('resultUnits').textContent = resultFormatted.units;
+
+            const feedback = document.getElementById('feedback');
+            if (isCorrect) {
+                correctAnswers++;
+                feedback.textContent = '¡Excelente! ✅';
+                feedback.className = 'feedback correct';
+            } else {
+                feedback.textContent = `Casi. La respuesta es ${exercise.result} ❌`;
+                feedback.className = 'feedback incorrect';
+            }
+            feedback.style.display = 'block';
+            
+            document.getElementById('checkBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').focus();
+
+            // --- ESTA ES LA PARTE CLAVE ---
+            // Prepara los datos del punto y los envía a Firebase inmediatamente.
+            const answerData = {
+                student: currentStudent,
+                sessionId: gameSessionId,
+                exercise: currentExercise,
+                number1: exercise.number1,
+                number2: exercise.number2,
+                studentAnswer: studentAnswer,
+                correctAnswer: exercise.result,
+                isCorrect: isCorrect,
+                timestamp: new Date().toISOString()
+            };
+
+            studentAnswers.push(answerData); // Guarda la respuesta localmente para el resumen final
+            saveAnswerToFirestore(answerData); // Envía la respuesta a la nube
+        }
+
+        function nextExercise() {
+            if (currentExercise < totalExercises) {
+                currentExercise++;
+                loadExercise();
+            } else {
+                finishGame();
+            }
+        }
+
+        function finishGame() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('finalScreen').style.display = 'flex';
+
+            const percentage = Math.round((correctAnswers / totalExercises) * 100);
+            const totalTime = Math.round((new Date() - gameStartTime) / 1000 / 60);
+
+            document.getElementById('finalScore').innerHTML = `
+                <div style="margin-bottom: 15px;"><strong>${currentStudent}</strong></div>
+                <div>Respuestas correctas: ${correctAnswers} de ${totalExercises}</div>
+                <div>Porcentaje de aciertos: ${percentage}%</div>
+                <div>Tiempo total: Aprox. ${totalTime} minutos</div>`;
+            
+            // Guarda la sesión completa en Firestore
+            saveCompleteSessionToFirestore();
+        }
+
+        function restartGame() {
+            document.getElementById('finalScreen').style.display = 'none';
+            document.getElementById('studentSelection').style.display = 'flex';
+            document.getElementById('studentSelect').value = '';
+        }
+
+        // --- NUEVA FUNCIÓN PARA GUARDAR CADA RESPUESTA EN FIRESTORE ---
+        async function saveAnswerToFirestore(answerData) {
+            // Verifica que Firestore esté disponible
+            if (!window.db) {
+                console.log("Firestore no está disponible. No se pudo guardar la respuesta.");
+                return;
+            }
+            try {
+                // Añade un nuevo documento a la colección "respuestas"
+                const docRef = await window.addDoc(window.collection(window.db, "respuestas"), answerData);
+                console.log(`Respuesta del ejercicio ${answerData.exercise} guardada con ID: ${docRef.id}`);
+            } catch (error) {
+                console.error("Error al guardar la respuesta en Firestore: ", error);
+            }
+        }
+        
+        // --- NUEVA FUNCIÓN PARA GUARDAR LA SESIÓN COMPLETA ---
+        async function saveCompleteSessionToFirestore() {
+            if (!window.db) {
+                console.log("Firestore no está disponible. No se pudo guardar la sesión.");
+                return;
+            }
+            const sessionData = {
+                student: currentStudent,
+                sessionId: gameSessionId,
+                startTime: gameStartTime.toISOString(),
+                endTime: new Date().toISOString(),
+                totalExercises: totalExercises,
+                correctAnswers: correctAnswers,
+                percentage: Math.round((correctAnswers / totalExercises) * 100),
+                answers: studentAnswers // Incluye el detalle de todas las respuestas
+            };
+            try {
+                // Crea un documento con el ID de la sesión en la colección "sesiones"
+                await window.setDoc(window.doc(window.db, "sesiones", gameSessionId), sessionData);
+                console.log(`Sesión completa guardada en Firestore con ID: ${gameSessionId}`);
+            } catch (error) {
+                console.error("Error al guardar la sesión completa en Firestore: ", error);
+            }
+        }
+        
+        // --- Lógica de la interfaz ---
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                const checkBtnVisible = document.getElementById('checkBtn').style.display !== 'none';
+                const nextBtnVisible = document.getElementById('nextBtn').style.display !== 'none';
+                if (checkBtnVisible) checkAnswer();
+                else if (nextBtnVisible) nextExercise();
+            }
+        });
+
+        document.getElementById('tensInput').addEventListener('input', function (e) {
+            if (this.value.length >= 1) {
+                this.value = this.value.slice(0, 1); // Limita a 1 dígito
+                document.getElementById('unitsInput').focus();
+            }
+        });
+    </script>
+</body>
+</html>
